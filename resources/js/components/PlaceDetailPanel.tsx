@@ -1,4 +1,4 @@
-import { MapPin, MessageSquare, Phone, Star } from 'lucide-react';
+import { Edit, MapPin, MessageSquare, Phone, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FavoriteButton } from '@/components/FavoriteButton';
@@ -10,9 +10,10 @@ type Props = {
     placeId: string | null;
     onClose: () => void;
     onAddReview?: (placeId: string) => void;
+    onEdit?: (placeId: string) => void;
 };
 
-export function PlaceDetailPanel({ placeId, onClose, onAddReview }: Props) {
+export function PlaceDetailPanel({ placeId, onClose, onAddReview, onEdit }: Props) {
     const { lugar, carregando, erro } = usePlaceDetails(placeId);
 
     const catLabel = CATEGORY_OPTIONS.find((o) => o.value === lugar?.categoria)?.label ?? lugar?.categoria ?? '';
@@ -92,15 +93,12 @@ export function PlaceDetailPanel({ placeId, onClose, onAddReview }: Props) {
                         )}
 
                         <div className="mt-4 flex gap-2">
-                            <button
-                                type="button"
-                                className="flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 transition-colors hover:bg-accent"
-                            >
+                            <div className="flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5">
                                 <FavoriteButton place={lugar} />
                                 <span className="text-sm font-medium">
                                     Favorito
                                 </span>
-                            </button>
+                            </div>
                             {onAddReview && (
                                 <Button
                                     className="flex-1 gap-2"
@@ -111,6 +109,17 @@ export function PlaceDetailPanel({ placeId, onClose, onAddReview }: Props) {
                                 </Button>
                             )}
                         </div>
+
+                        {onEdit && (
+                            <Button
+                                variant="outline"
+                                className="mt-2 w-full gap-2"
+                                onClick={() => onEdit(lugar.id)}
+                            >
+                                <Edit size={14} />
+                                Editar Local
+                            </Button>
+                        )}
 
                         {lugar.avaliacoes.length > 0 && (
                             <div className="mt-5">

@@ -150,19 +150,7 @@ export function PlacesMap({
                     },
                 });
 
-                const infoWindow = new google.maps.InfoWindow({
-                    content: `
-                        <div style="padding:6px 10px;max-width:220px;font-family:system-ui,sans-serif;background:#fff;color:#111;border-radius:4px">
-                            <strong style="font-size:13px;color:#111">${lugar.nome}</strong>
-                            ${lugar.endereco ? `<p style="margin:4px 0 0;font-size:12px;color:#555">${lugar.endereco}</p>` : ''}
-                            ${lugar.amenidades.length > 0 ? `<p style="margin:4px 0 0;font-size:11px;color:#777">${lugar.amenidades.slice(0, 2).map((a) => AMENITIES_LABELS[a as keyof typeof AMENITIES_LABELS] ?? a).join(', ')}</p>` : ''}
-                            <p style="margin:6px 0 0;font-size:11px;color:#888;font-style:italic">Clique para ver detalhes</p>
-                        </div>
-                    `,
-                });
-
                 marker.addListener('click', () => {
-                    infoWindow.open(map, marker);
                     onSelect(lugar.id);
                 });
 

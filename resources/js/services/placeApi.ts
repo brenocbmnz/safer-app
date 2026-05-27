@@ -74,8 +74,25 @@ export async function criarLugar(payload: {
     contato?: string;
     amenidades?: Amenidade[];
     google_place_id?: string;
+    imagem?: File;
 }): Promise<Place> {
-    const { data } = await axios.post<{ sucesso: boolean; dados: Place }>('/api/places', payload);
+    const formData = new FormData();
+    formData.append('nome', payload.nome);
+    if (payload.descricao) formData.append('descricao', payload.descricao);
+    formData.append('categoria', payload.categoria);
+    formData.append('latitude', payload.latitude.toString());
+    formData.append('longitude', payload.longitude.toString());
+    if (payload.endereco) formData.append('endereco', payload.endereco);
+    if (payload.contato) formData.append('contato', payload.contato);
+    if (payload.amenidades) {
+        payload.amenidades.forEach((a, i) => formData.append(`amenidades[${i}]`, a));
+    }
+    if (payload.google_place_id) formData.append('google_place_id', payload.google_place_id);
+    if (payload.imagem) formData.append('imagem', payload.imagem);
+
+    const { data } = await axios.post<{ sucesso: boolean; dados: Place }>('/api/places', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return data.dados;
 }
 
@@ -90,11 +107,29 @@ export async function atualizarLugar(
         endereco: string;
         contato: string;
         amenidades: Amenidade[];
+        imagem: File;
     }>,
 ): Promise<Place> {
-    const { data } = await axios.put<{ sucesso: boolean; dados: Place }>(
+    const formData = new FormData();
+    
+    if (payload.nome) formData.append('nome', payload.nome);
+    if (payload.descricao !== undefined) formData.append('descricao', payload.descricao);
+    if (payload.categoria) formData.append('categoria', payload.categoria);
+    if (payload.latitude !== undefined) formData.append('latitude', payload.latitude.toString());
+    if (payload.longitude !== undefined) formData.append('longitude', payload.longitude.toString());
+    if (payload.endereco !== undefined) formData.append('endereco', payload.endereco);
+    if (payload.contato !== undefined) formData.append('contato', payload.contato);
+    if (payload.amenidades) {
+        payload.amenidades.forEach((a, i) => formData.append(`amenidades[${i}]`, a));
+    }
+    if (payload.imagem) formData.append('imagem', payload.imagem);
+
+    formData.append('_method', 'PUT');
+
+    const { data } = await axios.post<{ sucesso: boolean; dados: Place }>(
         `/api/places/${id}`,
-        payload,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
     );
     return data.dados;
 }

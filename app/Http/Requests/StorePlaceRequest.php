@@ -29,6 +29,7 @@ final class StorePlaceRequest extends FormRequest
             'amenidades' => ['nullable', 'array', 'max:9'],
             'amenidades.*' => ['string', 'in:pet_friendly,banheiro_genero_neutro,wifi_gratuito,aceita_nome_social,acessivel_pcd,bom_para_ir_sozinho,bom_para_casais,ambiente_acolhedor,funcionarios_preparados'],
             'google_place_id' => ['nullable', 'string', 'max:255'],
+            'imagem' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
         ];
     }
 }

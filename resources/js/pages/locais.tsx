@@ -3,9 +3,11 @@ import { Heart, Loader2, MapPin, Star, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SaferAppLayout } from '@/layouts/safer-app-layout';
 import { PlaceDetailPanel } from '@/components/PlaceDetailPanel';
+import { PlaceEditModal } from '@/components/PlaceEditModal';
 import { ReviewFormModal } from '@/components/ReviewFormModal';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { usePlaces } from '@/hooks/usePlaces';
+import { usePlaceDetails } from '@/hooks/usePlaceDetails';
 import { AMENITIES_LABELS, CATEGORY_OPTIONS } from '@/config/options';
 import type { Amenidade, CategoriaLugar, Place, PlaceFilters } from '@/types/place';
 import { buscarFavoritos } from '@/services/placeApi';
@@ -28,11 +30,15 @@ export default function Locais() {
     const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
     const [reviewPlaceId, setReviewPlaceId] = useState<string | null>(null);
     const [reviewOpen, setReviewOpen] = useState(false);
+    const [editPlaceId, setEditPlaceId] = useState<string | null>(null);
+    const [editOpen, setEditOpen] = useState(false);
     const [filtroCategoria, setFiltroCategoria] = useState<CategoriaLugar | 'todos'>('todos');
     const [filtroAmenidades, setFiltroAmenidades] = useState<Amenidade[]>([]);
     const [favoritos, setFavoritos] = useState<Place[]>([]);
     const [carregandoFavoritos, setCarregandoFavoritos] = useState(false);
     const [erroFavoritos, setErroFavoritos] = useState<string | null>(null);
+
+    const { lugar: editPlace, recarregar: recarregarEditPlace } = usePlaceDetails(editPlaceId);
 
     useEffect(() => {
         if (!navigator.geolocation) {
@@ -92,7 +98,7 @@ export default function Locais() {
             : {}),
     };
 
-    const { lugares, carregando, erro } = usePlaces(filters);
+    const { lugares, carregando, erro, recarregar } = usePlaces(filters);
 
     const getCategoryLabel = (cat: string) =>
         CATEGORY_OPTIONS.find((o) => o.value === cat)?.label ?? cat;
@@ -302,11 +308,10 @@ export default function Locais() {
                     ) : (
                         <div className="flex flex-col gap-2">
                             {favoritos.map((lugar) => (
-                                <button
+                                <div
                                     key={lugar.id}
-                                    type="button"
                                     onClick={() => setSelecionadoId(lugar.id)}
-                                    className="w-full rounded-xl border bg-card p-3 text-left shadow-sm transition-all hover:shadow-md"
+                                    className="w-full rounded-xl border bg-card p-3 cursor-pointer shadow-sm transition-all hover:shadow-md"
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0 flex-1">
@@ -317,7 +322,7 @@ export default function Locais() {
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-2">
+                                        <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                             <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
                                                 {getCategoryLabel(lugar.categoria)}
                                             </span>
@@ -335,7 +340,7 @@ export default function Locais() {
                                                 : 'Sem avaliações'}
                                         </span>
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     )
@@ -351,11 +356,10 @@ export default function Locais() {
                 ) : (
                     <div className="flex flex-col gap-2">
                         {lugares.map((lugar) => (
-                            <button
+                            <div
                                 key={lugar.id}
-                                type="button"
                                 onClick={() => setSelecionadoId(lugar.id)}
-                                className="w-full rounded-xl border bg-card p-3 text-left shadow-sm transition-all hover:shadow-md"
+                                className="w-full rounded-xl border bg-card p-3 cursor-pointer shadow-sm transition-all hover:shadow-md"
                             >
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
@@ -366,7 +370,7 @@ export default function Locais() {
                                             </p>
                                         )}
                                     </div>
-                                    <div className="flex shrink-0 items-center gap-2">
+                                    <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
                                             {getCategoryLabel(lugar.categoria)}
                                         </span>
@@ -384,7 +388,7 @@ export default function Locais() {
                                             : 'Sem avaliações'}
                                     </span>
                                 </div>
-                            </button>
+                            </div>
                         ))}
                     </div>
                 )}
@@ -397,6 +401,10 @@ export default function Locais() {
                     setReviewPlaceId(id);
                     setReviewOpen(true);
                 }}
+                onEdit={(id) => {
+                    setEditPlaceId(id);
+                    setEditOpen(true);
+                }}
             />
 
             <ReviewFormModal
@@ -405,6 +413,23 @@ export default function Locais() {
                 onClose={() => {
                     setReviewOpen(false);
                     setReviewPlaceId(null);
+                }}
+            />
+
+            <PlaceEditModal
+                open={editOpen}
+                place={editPlace}
+                onClose={() => {
+                    setEditOpen(false);
+                    setEditPlaceId(null);
+                }}
+                onUpdated={() => {
+                    setSelecionadoId(null); // Close detail panel
+                    recarregar();
+                    if (abaAtiva === 'favoritos') {
+                        carregarFavoritos();
+                    }
+                    recarregarEditPlace();
                 }}
             />
         </SaferAppLayout>

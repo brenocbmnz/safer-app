@@ -9,6 +9,8 @@ use App\Http\Requests\UpdatePlaceRequest;
 use App\Models\Place;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 final class PlaceController
 {
@@ -91,6 +93,7 @@ final class PlaceController
             'endereco' => $place->endereco,
             'contato' => $place->contato,
             'amenidades' => $place->amenidades ?? [],
+            'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
             'google_place_id' => $place->google_place_id,
             'user_id' => $place->user_id,
             'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
@@ -125,6 +128,7 @@ final class PlaceController
                 'endereco' => $place->endereco,
                 'contato' => $place->contato,
                 'amenidades' => $place->amenidades ?? [],
+                'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
                 'google_place_id' => $place->google_place_id,
                 'user_id' => $place->user_id,
                 'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
@@ -151,6 +155,12 @@ final class PlaceController
         $data['user_id'] = auth()->id();
         $data['amenidades'] = $data['amenidades'] ?? [];
 
+        if ($request->hasFile('imagem')) {
+            $data['imagem_path'] = $this->uploadImage($request->file('imagem'));
+        }
+
+        unset($data['imagem']);
+
         $place = Place::create($data);
         $place->loadAvg('reviews', 'nota');
         $place->loadCount('reviews');
@@ -167,6 +177,7 @@ final class PlaceController
                 'endereco' => $place->endereco,
                 'contato' => $place->contato,
                 'amenidades' => $place->amenidades ?? [],
+                'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
                 'google_place_id' => $place->google_place_id,
                 'user_id' => $place->user_id,
                 'mediaNota' => null,
@@ -180,7 +191,19 @@ final class PlaceController
 
     public function update(UpdatePlaceRequest $request, Place $place): JsonResponse
     {
-        $place->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('imagem')) {
+            // Delete old image if exists
+            if ($place->imagem_path) {
+                Storage::disk('public')->delete($place->imagem_path);
+            }
+            $data['imagem_path'] = $this->uploadImage($request->file('imagem'));
+        }
+
+        unset($data['imagem']);
+
+        $place->update($data);
         $place->loadAvg('reviews', 'nota');
         $place->loadCount('reviews');
 
@@ -200,6 +223,7 @@ final class PlaceController
                 'endereco' => $place->endereco,
                 'contato' => $place->contato,
                 'amenidades' => $place->amenidades ?? [],
+                'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
                 'google_place_id' => $place->google_place_id,
                 'user_id' => $place->user_id,
                 'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
@@ -213,8 +237,18 @@ final class PlaceController
 
     public function destroy(Place $place): JsonResponse
     {
+        // Delete image if exists
+        if ($place->imagem_path) {
+            Storage::disk('public')->delete($place->imagem_path);
+        }
+
         $place->delete();
 
         return response()->json(['sucesso' => true]);
+    }
+
+    private function uploadImage(UploadedFile $file): string
+    {
+        return $file->store('places', 'public');
     }
 }

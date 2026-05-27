@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SaferAppLayout } from '@/layouts/safer-app-layout';
 import { FilterPanel } from '@/components/FilterPanel';
 import { PlaceDetailPanel } from '@/components/PlaceDetailPanel';
+import { PlaceEditModal } from '@/components/PlaceEditModal';
 import { PlaceFormModal } from '@/components/PlaceFormModal';
 import { PlaceList } from '@/components/PlaceList';
 import { PlacesMap } from '@/components/PlacesMap';
@@ -76,11 +77,14 @@ export default function Mapa() {
     const [formGooglePlace, setFormGooglePlace] = useState<GooglePlaceSuggestion | null>(null);
     const [reviewOpen, setReviewOpen] = useState(false);
     const [reviewPlaceId, setReviewPlaceId] = useState<string | null>(null);
+    const [editOpen, setEditOpen] = useState(false);
+    const [editPlaceId, setEditPlaceId] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<FeedbackState>(null);
     const [buscandoGoogle, setBuscandoGoogle] = useState(false);
     const cmdCounter = useRef(0);
 
     const { lugares, carregando, recarregar } = usePlaces(filtros);
+    const { lugar: editPlace } = usePlaceDetails(editPlaceId);
 
     // Google Places search when viewport/filters change
     useEffect(() => {
@@ -284,6 +288,10 @@ export default function Mapa() {
                     setReviewPlaceId(id);
                     setReviewOpen(true);
                 }}
+                onEdit={(id) => {
+                    setEditPlaceId(id);
+                    setEditOpen(true);
+                }}
             />
 
             <PlaceFormModal
@@ -312,6 +320,21 @@ export default function Mapa() {
                 }}
                 onCreated={() => {
                     setFeedback({ tipo: 'sucesso', texto: 'Avaliação enviada!' });
+                    setTimeout(() => setFeedback(null), 3000);
+                }}
+            />
+
+            <PlaceEditModal
+                open={editOpen}
+                place={editPlace}
+                onClose={() => {
+                    setEditOpen(false);
+                    setEditPlaceId(null);
+                }}
+                onUpdated={() => {
+                    setSelecionadoId(null); // Close detail panel
+                    recarregar();
+                    setFeedback({ tipo: 'sucesso', texto: 'Local atualizado com sucesso!' });
                     setTimeout(() => setFeedback(null), 3000);
                 }}
             />

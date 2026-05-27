@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string|null $endereco
  * @property-read string|null $contato
  * @property-read list<string> $amenidades
+ * @property-read string|null $imagem_path
  * @property-read string|null $google_place_id
  * @property-read string|null $user_id
  * @property-read CarbonInterface $created_at
@@ -43,6 +44,7 @@ final class Place extends Model
         'endereco',
         'contato',
         'amenidades',
+        'imagem_path',
         'google_place_id',
         'user_id',
     ];

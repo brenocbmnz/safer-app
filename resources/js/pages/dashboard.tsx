@@ -99,7 +99,7 @@ export default function Dashboard() {
                                     className="w-36 shrink-0"
                                 >
                                     <img
-                                        src="/design/thumbnailplaceholder.png"
+                                        src={lugar.imagemUrl || '/design/thumbnailplaceholder.png'}
                                         alt={lugar.nome}
                                         className="h-28 w-full rounded-xl object-cover"
                                     />

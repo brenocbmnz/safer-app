@@ -28,6 +28,7 @@ export interface BasePlace {
     endereco?: string;
     contato?: string;
     amenidades: Amenidade[];
+    imagemUrl?: string | null;
     criadoEm: string;
     atualizadoEm: string;
     google_place_id?: string;

@@ -1,42 +1,20 @@
 import { useEffect, useState } from 'react';
-import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AMENITIES_LABELS, CATEGORY_OPTIONS } from '@/config/options';
-import { criarLugar } from '@/services/placeApi';
-import type { Amenidade, CategoriaLugar, GooglePlaceSuggestion } from '@/types/place';
-import { loadGoogleMapsApi } from '@/utils/googleMapsLoader';
+import { atualizarLugar } from '@/services/placeApi';
+import type { Amenidade, CategoriaLugar, PlaceDetalhado } from '@/types/place';
 
 type Props = {
     open: boolean;
     onClose: () => void;
-    /** Coordinates where the user clicked on the map */
-    latitude: number;
-    longitude: number;
-    /** When clicking a Google Places suggestion, pre-fill the form */
-    googlePlace?: GooglePlaceSuggestion | null;
-    onCreated?: () => void;
+    place: PlaceDetalhado | null;
+    onUpdated?: () => void;
 };
 
 const AMENIDADES = Object.entries(AMENITIES_LABELS) as [Amenidade, string][];
 
-function categoryFromGoogleTypes(tipos: string[]): CategoriaLugar {
-    if (tipos.some((t) => ['cafe', 'coffee_shop'].includes(t))) return 'cafe';
-    if (tipos.some((t) => ['bar', 'night_club', 'liquor_store'].includes(t))) return 'bar';
-    if (tipos.some((t) => ['hospital', 'doctor', 'health', 'pharmacy', 'dentist'].includes(t))) return 'saude';
-    if (tipos.some((t) => ['school', 'university', 'library', 'book_store'].includes(t))) return 'educacao';
-    if (tipos.some((t) => ['museum', 'art_gallery', 'movie_theater', 'theater'].includes(t))) return 'cultura';
-    return 'outro';
-}
-
-export function PlaceFormModal({
-    open,
-    onClose,
-    latitude,
-    longitude,
-    googlePlace,
-    onCreated,
-}: Props) {
+export function PlaceEditModal({ open, onClose, place, onUpdated }: Props) {
     const [nome, setNome] = useState('');
     const [descricao, setDescricao] = useState('');
     const [categoria, setCategoria] = useState<CategoriaLugar>('outro');
@@ -47,45 +25,25 @@ export function PlaceFormModal({
     const [previsualizacao, setPrevisualizacao] = useState<string | null>(null);
     const [enviando, setEnviando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
-    const [enderecoPin, setEnderecoPin] = useState<string | null>(null);
 
-    // Reset and pre-fill whenever the modal opens
+    // Pre-fill form with existing place data
     useEffect(() => {
-        if (!open) {
-            setEnderecoPin(null);
+        if (!open || !place) {
             setImagem(null);
             setPrevisualizacao(null);
             return;
         }
+        
+        setNome(place.nome);
+        setDescricao(place.descricao ?? '');
+        setCategoria(place.categoria);
+        setEndereco(place.endereco ?? '');
+        setContato(place.contato ?? '');
+        setAmenidades(place.amenidades);
         setErro(null);
-        setAmenidades([]);
-        setContato('');
         setImagem(null);
-        setPrevisualizacao(null);
-        if (googlePlace) {
-            setNome(googlePlace.nome);
-            setDescricao('');
-            setEndereco(googlePlace.endereco ?? '');
-            setContato(googlePlace.telefone ?? '');
-            setCategoria(categoryFromGoogleTypes(googlePlace.tipos));
-            setEnderecoPin(googlePlace.endereco ?? '');
-        } else {
-            setNome('');
-            setDescricao('');
-            setEndereco('');
-            setCategoria('outro');
-            setEnderecoPin(null);
-            loadGoogleMapsApi()
-                .then(async (g) => {
-                    const geocoder = new g.maps.Geocoder();
-                    const { results } = await geocoder.geocode({
-                        location: { lat: latitude, lng: longitude },
-                    });
-                    setEnderecoPin(results[0]?.formatted_address ?? '');
-                })
-                .catch(() => setEnderecoPin(''));
-        }
-    }, [open, googlePlace, latitude, longitude]);
+        setPrevisualizacao(place.imagemUrl ?? null);
+    }, [open, place]);
 
     const toggleAmenidade = (a: Amenidade) => {
         setAmenidades((prev) =>
@@ -107,68 +65,39 @@ export function PlaceFormModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!place) return;
+
         setErro(null);
         setEnviando(true);
 
         try {
-            await criarLugar({
+            await atualizarLugar(place.id, {
                 nome,
                 descricao: descricao || undefined,
                 categoria,
-                latitude,
-                longitude,
                 endereco: endereco || undefined,
                 contato: contato || undefined,
                 amenidades,
-                google_place_id: googlePlace?.placeId,
                 imagem: imagem || undefined,
             });
-            onCreated?.();
             onClose();
-        } catch {
-            setErro('Erro ao salvar local. Tente novamente.');
+            onUpdated?.();
+        } catch (error) {
+            console.error('Erro ao atualizar lugar:', error);
+            setErro('Erro ao atualizar local. Tente novamente.');
         } finally {
             setEnviando(false);
         }
     };
 
+    if (!place) return null;
+
     return (
         <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>
-                        {googlePlace ? `Adicionar "${googlePlace.nome}"` : 'Adicionar Local'}
-                    </DialogTitle>
+                    <DialogTitle>Editar Local</DialogTitle>
                 </DialogHeader>
-
-                {/* Pin location indicator */}
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                    <MapPin size={13} className="shrink-0 text-primary" />
-                    <span>
-                        {enderecoPin === null
-                            ? 'Buscando localização...'
-                            : enderecoPin !== ''
-                              ? enderecoPin
-                              : `Pin colocado em ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`}
-                    </span>
-                </div>
-
-                {/* Google match badge */}
-                {googlePlace && (
-                    <div className="flex items-center gap-1.5 rounded-lg bg-blue-500/10 px-3 py-2 text-xs text-blue-600 dark:text-blue-400">
-                        <a
-                            href={`https://www.google.com/maps/place/?q=place_id:${googlePlace.placeId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-semibold underline-offset-2 hover:underline"
-                        >
-                            Link para o Google Maps
-                        </a>
-                        {googlePlace.rating && (
-                            <span className="ml-auto opacity-80">★ {googlePlace.rating.toFixed(1)}</span>
-                        )}
-                    </div>
-                )}
 
                 <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
                     {erro && (
@@ -258,7 +187,7 @@ export function PlaceFormModal({
                             </div>
                         )}
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Formatos aceitos: JPEG, PNG, WebP (máx. 2MB)
+                            {imagem ? 'Nova imagem selecionada' : 'Escolha uma nova imagem para substituir a atual'} • Formatos: JPEG, PNG, WebP (máx. 2MB)
                         </p>
                     </div>
 
@@ -287,7 +216,7 @@ export function PlaceFormModal({
                             Cancelar
                         </Button>
                         <Button type="submit" className="flex-1" disabled={enviando}>
-                            {enviando ? 'Salvando...' : 'Salvar local'}
+                            {enviando ? 'Salvando...' : 'Salvar Alterações'}
                         </Button>
                     </div>
                 </form>
