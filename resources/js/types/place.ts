@@ -37,6 +37,7 @@ export interface BasePlace {
 export interface Place extends BasePlace {
     mediaNota: number | null;
     totalAvaliacoes: number;
+    isFavorited?: boolean;
 }
 
 export interface ViewportBounds {
@@ -66,6 +67,9 @@ export interface PlaceFilters {
     notaMinima?: number;
     busca?: string;
     bounds?: ViewportBounds;
+    ordenar?: 'popular' | 'perto';
+    userLat?: number;
+    userLng?: number;
 }
 
 export interface GooglePlaceSuggestion {

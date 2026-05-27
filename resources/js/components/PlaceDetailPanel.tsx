@@ -1,6 +1,7 @@
 import { MapPin, MessageSquare, Phone, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { AMENITIES_LABELS, CATEGORY_OPTIONS } from '@/config/options';
 import { usePlaceDetails } from '@/hooks/usePlaceDetails';
 import type { Amenidade } from '@/types/place';
@@ -90,15 +91,26 @@ export function PlaceDetailPanel({ placeId, onClose, onAddReview }: Props) {
                             </div>
                         )}
 
-                        {onAddReview && (
-                            <Button
-                                className="mt-4 w-full gap-2"
-                                onClick={() => onAddReview(lugar.id)}
+                        <div className="mt-4 flex gap-2">
+                            <button
+                                type="button"
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 transition-colors hover:bg-accent"
                             >
-                                <MessageSquare size={14} />
-                                Avaliar este local
-                            </Button>
-                        )}
+                                <FavoriteButton place={lugar} />
+                                <span className="text-sm font-medium">
+                                    Favorito
+                                </span>
+                            </button>
+                            {onAddReview && (
+                                <Button
+                                    className="flex-1 gap-2"
+                                    onClick={() => onAddReview(lugar.id)}
+                                >
+                                    <MessageSquare size={14} />
+                                    Avaliar
+                                </Button>
+                            )}
+                        </div>
 
                         {lugar.avaliacoes.length > 0 && (
                             <div className="mt-5">

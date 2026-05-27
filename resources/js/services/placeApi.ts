@@ -34,6 +34,18 @@ function serializeFilters(filters: PlaceFilters): URLSearchParams {
         params.set('longitudeMax', filters.bounds.leste.toString());
     }
 
+    if (filters.ordenar) {
+        params.set('ordenar', filters.ordenar);
+    }
+
+    if (filters.userLat !== undefined) {
+        params.set('userLat', filters.userLat.toString());
+    }
+
+    if (filters.userLng !== undefined) {
+        params.set('userLng', filters.userLng.toString());
+    }
+
     return params;
 }
 
@@ -142,5 +154,18 @@ export async function buscarDetalhesGoogle(placeId: string): Promise<GooglePlace
     const { data } = await axios.get<{ sucesso: boolean; dados: GooglePlaceSuggestion }>(
         `/api/places/externo/google/${encodeURIComponent(placeId)}`,
     );
+    return data.dados;
+}
+
+export async function marcarFavorito(placeId: string): Promise<void> {
+    await axios.post(`/api/places/${placeId}/favorite`);
+}
+
+export async function desmarcarFavorito(placeId: string): Promise<void> {
+    await axios.delete(`/api/places/${placeId}/favorite`);
+}
+
+export async function buscarFavoritos(filters?: PlaceFilters): Promise<Place[]> {
+    const { data } = await axios.get<{ sucesso: boolean; dados: Place[] }>('/api/favorites');
     return data.dados;
 }

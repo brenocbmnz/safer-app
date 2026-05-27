@@ -16,6 +16,10 @@ final class PlaceController
     {
         $query = Place::query()->withAvg('reviews', 'nota')->withCount('reviews');
 
+        if (auth()->check()) {
+            $query->withExists(['favoritedBy as is_favorited' => fn ($q) => $q->where('user_id', auth()->id())]);
+        }
+
         if ($request->filled('categoria')) {
             $query->where('categoria', $request->string('categoria')->toString());
         }
@@ -34,7 +38,7 @@ final class PlaceController
                 explode(',', $request->string('amenidades')->toString())
             );
             foreach ($amenidades as $amenidade) {
-                $query->whereJsonContains('amenidades', trim($amenidade));
+                $query->whereJsonContains('amenidades', mb_trim($amenidade));
             }
         }
 
@@ -62,7 +66,22 @@ final class PlaceController
             $query->having('reviews_avg_nota', '>=', (float) $request->input('notaMinima'));
         }
 
-        $places = $query->latest()->get()->map(fn (Place $place) => [
+        $ordenar = $request->string('ordenar')->toString();
+
+        if ($ordenar === 'popular') {
+            $query->orderByRaw('reviews_avg_nota IS NULL ASC')->orderByDesc('reviews_avg_nota')->orderByDesc('reviews_count');
+        } elseif ($ordenar === 'perto' && $request->filled('userLat') && $request->filled('userLng')) {
+            $lat = (float) $request->input('userLat');
+            $lng = (float) $request->input('userLng');
+            $query->orderByRaw(
+                '(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))',
+                [$lat, $lng, $lat],
+            );
+        } else {
+            $query->latest();
+        }
+
+        $places = $query->get()->map(fn (Place $place) => [
             'id' => $place->id,
             'nome' => $place->nome,
             'descricao' => $place->descricao,
@@ -76,6 +95,7 @@ final class PlaceController
             'user_id' => $place->user_id,
             'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
             'totalAvaliacoes' => (int) $place->reviews_count,
+            'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
             'criadoEm' => $place->created_at->toIso8601String(),
             'atualizadoEm' => $place->updated_at->toIso8601String(),
         ]);
@@ -88,6 +108,10 @@ final class PlaceController
         $place->loadAvg('reviews', 'nota');
         $place->loadCount('reviews');
         $place->load('reviews');
+
+        if (auth()->check()) {
+            $place->loadExists(['favoritedBy as is_favorited' => fn ($q) => $q->where('user_id', auth()->id())]);
+        }
 
         return response()->json([
             'sucesso' => true,
@@ -105,6 +129,7 @@ final class PlaceController
                 'user_id' => $place->user_id,
                 'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
                 'totalAvaliacoes' => (int) $place->reviews_count,
+                'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
                 'criadoEm' => $place->created_at->toIso8601String(),
                 'atualizadoEm' => $place->updated_at->toIso8601String(),
                 'avaliacoes' => $place->reviews->map(fn ($r) => [
@@ -146,6 +171,7 @@ final class PlaceController
                 'user_id' => $place->user_id,
                 'mediaNota' => null,
                 'totalAvaliacoes' => 0,
+                'isFavorited' => false,
                 'criadoEm' => $place->created_at->toIso8601String(),
                 'atualizadoEm' => $place->updated_at->toIso8601String(),
             ],
@@ -157,6 +183,10 @@ final class PlaceController
         $place->update($request->validated());
         $place->loadAvg('reviews', 'nota');
         $place->loadCount('reviews');
+
+        if (auth()->check()) {
+            $place->loadExists(['favoritedBy as is_favorited' => fn ($q) => $q->where('user_id', auth()->id())]);
+        }
 
         return response()->json([
             'sucesso' => true,
@@ -174,6 +204,7 @@ final class PlaceController
                 'user_id' => $place->user_id,
                 'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
                 'totalAvaliacoes' => (int) $place->reviews_count,
+                'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
                 'criadoEm' => $place->created_at->toIso8601String(),
                 'atualizadoEm' => $place->updated_at->toIso8601String(),
             ],

@@ -1,6 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Play } from 'lucide-react';
-import AppLogoIcon from '@/components/app-logo-icon';
 import { usePlaces } from '@/hooks/usePlaces';
 import { CATEGORY_OPTIONS } from '@/config/options';
 import { SaferAppLayout } from '@/layouts/safer-app-layout';
@@ -23,10 +22,10 @@ export default function Dashboard() {
 
             <div className="px-4 pt-6 pb-4">
                 {/* Logo header */}
-                <div className="mb-6 flex flex-col items-center">
-                    <p className="text-[11px] text-muted-foreground">Safer</p>
-                    <AppLogoIcon className="my-1 h-8 w-8 text-foreground" />
-                    <p className="text-[11px] text-muted-foreground">Maps</p>
+                <div className="mb-6 flex items-center justify-center gap-3">
+                    <p className="text-xl font-bold text-foreground">Safer</p>
+                    <img src="/design/pride-location.png" alt="Pride location" className="h-10 w-10 object-contain" />
+                    <p className="text-xl font-bold text-foreground">Maps</p>
                 </div>
 
                 {/* Greeting */}

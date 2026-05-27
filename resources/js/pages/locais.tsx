@@ -1,14 +1,17 @@
 import { Head, Link } from '@inertiajs/react';
 import { Heart, Loader2, MapPin, Star, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SaferAppLayout } from '@/layouts/safer-app-layout';
 import { PlaceDetailPanel } from '@/components/PlaceDetailPanel';
 import { ReviewFormModal } from '@/components/ReviewFormModal';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { usePlaces } from '@/hooks/usePlaces';
 import { AMENITIES_LABELS, CATEGORY_OPTIONS } from '@/config/options';
-import type { Amenidade, CategoriaLugar, PlaceFilters } from '@/types/place';
+import type { Amenidade, CategoriaLugar, Place, PlaceFilters } from '@/types/place';
+import { buscarFavoritos } from '@/services/placeApi';
 
 type Aba = 'todos' | 'favoritos';
+type Modo = 'perto' | 'popular';
 
 const abas: Array<{ id: Aba; label: string }> = [
     { id: 'todos', label: 'Todos' },
@@ -19,15 +22,74 @@ const AMENIDADES_OPCOES = Object.entries(AMENITIES_LABELS) as [Amenidade, string
 
 export default function Locais() {
     const [abaAtiva, setAbaAtiva] = useState<Aba>('todos');
+    const [modoSelecionado, setModoSelecionado] = useState<Modo>('perto');
+    const [userLat, setUserLat] = useState<number | undefined>(undefined);
+    const [userLng, setUserLng] = useState<number | undefined>(undefined);
     const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
     const [reviewPlaceId, setReviewPlaceId] = useState<string | null>(null);
     const [reviewOpen, setReviewOpen] = useState(false);
     const [filtroCategoria, setFiltroCategoria] = useState<CategoriaLugar | 'todos'>('todos');
     const [filtroAmenidades, setFiltroAmenidades] = useState<Amenidade[]>([]);
+    const [favoritos, setFavoritos] = useState<Place[]>([]);
+    const [carregandoFavoritos, setCarregandoFavoritos] = useState(false);
+    const [erroFavoritos, setErroFavoritos] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!navigator.geolocation) {
+            setModoSelecionado('popular');
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                setUserLat(pos.coords.latitude);
+                setUserLng(pos.coords.longitude);
+            },
+            () => {
+                setModoSelecionado('popular');
+            },
+        );
+    }, []);
+
+    useEffect(() => {
+        if (abaAtiva === 'favoritos') {
+            setCarregandoFavoritos(true);
+            setErroFavoritos(null);
+            buscarFavoritos()
+                .then((data) => {
+                    setFavoritos(data);
+                })
+                .catch((error) => {
+                    console.error('Erro ao carregar favoritos:', error);
+                    setErroFavoritos('Erro ao carregar favoritos');
+                })
+                .finally(() => {
+                    setCarregandoFavoritos(false);
+                });
+        }
+    }, [abaAtiva]);
+
+    const handleModo = (modo: Modo) => {
+        setModoSelecionado(modo);
+        if (modo === 'perto' && userLat === undefined) {
+            navigator.geolocation?.getCurrentPosition(
+                (pos) => {
+                    setUserLat(pos.coords.latitude);
+                    setUserLng(pos.coords.longitude);
+                },
+                () => {
+                    setModoSelecionado('popular');
+                },
+            );
+        }
+    };
 
     const filters: PlaceFilters = {
         categoria: filtroCategoria,
         amenidades: filtroAmenidades,
+        ordenar: modoSelecionado,
+        ...(modoSelecionado === 'perto' && userLat !== undefined && userLng !== undefined
+            ? { userLat, userLng }
+            : {}),
     };
 
     const { lugares, carregando, erro } = usePlaces(filters);
@@ -46,6 +108,19 @@ export default function Locais() {
     const limparFiltros = () => {
         setFiltroCategoria('todos');
         setFiltroAmenidades([]);
+    };
+
+    const handleFavoriteToggle = (isFavorited: boolean) => {
+        // Reload favorites if we're on the favorites tab
+        if (abaAtiva === 'favoritos') {
+            buscarFavoritos()
+                .then((data) => {
+                    setFavoritos(data);
+                })
+                .catch((error) => {
+                    console.error('Erro ao recarregar favoritos:', error);
+                });
+        }
     };
 
     return (
@@ -98,18 +173,42 @@ export default function Locais() {
                             Ver mapa →
                         </Link>
                     </div>
-                    <div className="rounded-xl border bg-card p-4 shadow-sm">
-                        <h3 className="font-semibold">Locais Populares</h3>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Espaços queridinhos da comunidade.
-                        </p>
-                    </div>
-                    <div className="rounded-xl border bg-card p-4 shadow-sm">
-                        <h3 className="font-semibold">Ao Ar Livre</h3>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Parques e áreas verdes acolhedoras.
-                        </p>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleModo('perto')}
+                        className={`rounded-xl border p-4 text-left shadow-sm transition-colors ${
+                            modoSelecionado === 'perto'
+                                ? 'border-primary bg-primary/10'
+                                : 'bg-card hover:bg-accent'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <MapPin
+                                size={16}
+                                className={modoSelecionado === 'perto' ? 'text-primary' : 'text-muted-foreground'}
+                            />
+                            <h3 className="font-semibold">Perto de Você</h3>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">Locais próximos a você.</p>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleModo('popular')}
+                        className={`rounded-xl border p-4 text-left shadow-sm transition-colors ${
+                            modoSelecionado === 'popular'
+                                ? 'border-primary bg-primary/10'
+                                : 'bg-card hover:bg-accent'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            <Star
+                                size={16}
+                                className={modoSelecionado === 'popular' ? 'text-primary' : 'text-muted-foreground'}
+                            />
+                            <h3 className="font-semibold">Populares</h3>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">Espaços queridinhos da comunidade.</p>
+                    </button>
                 </div>
 
                 {/* Filters */}
@@ -170,7 +269,9 @@ export default function Locais() {
 
                 {/* List section */}
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="font-semibold">Perto de você</h2>
+                    <h2 className="font-semibold">
+                        {modoSelecionado === 'perto' ? 'Perto de você' : 'Locais Populares'}
+                    </h2>
                     <Link href="/mapa" className="text-xs text-primary font-medium">
                         Ver mapa
                     </Link>
@@ -182,11 +283,62 @@ export default function Locais() {
                     </p>
                 )}
 
+                {erroFavoritos && abaAtiva === 'favoritos' && (
+                    <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                        {erroFavoritos}
+                    </p>
+                )}
+
                 {abaAtiva === 'favoritos' ? (
-                    <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
-                        <Heart size={28} strokeWidth={1.5} />
-                        <p className="text-sm">Salve lugares favoritos para vê-los aqui.</p>
-                    </div>
+                    carregandoFavoritos ? (
+                        <div className="flex justify-center py-10">
+                            <Loader2 size={24} className="animate-spin text-muted-foreground" />
+                        </div>
+                    ) : favoritos.length === 0 ? (
+                        <div className="flex flex-col items-center gap-2 py-10 text-muted-foreground">
+                            <Heart size={28} strokeWidth={1.5} />
+                            <p className="text-sm">Salve lugares favoritos para vê-los aqui.</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2">
+                            {favoritos.map((lugar) => (
+                                <button
+                                    key={lugar.id}
+                                    type="button"
+                                    onClick={() => setSelecionadoId(lugar.id)}
+                                    className="w-full rounded-xl border bg-card p-3 text-left shadow-sm transition-all hover:shadow-md"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold">{lugar.nome}</p>
+                                            {lugar.endereco && (
+                                                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                                                    {lugar.endereco}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
+                                                {getCategoryLabel(lugar.categoria)}
+                                            </span>
+                                            <FavoriteButton place={lugar} onToggle={handleFavoriteToggle} />
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-1">
+                                        <Star
+                                            size={11}
+                                            className={lugar.mediaNota ? 'fill-amber-400 text-amber-400' : 'text-muted'}
+                                        />
+                                        <span className="text-xs text-muted-foreground">
+                                            {lugar.mediaNota !== null
+                                                ? `${lugar.mediaNota.toFixed(1)} (${lugar.totalAvaliacoes})`
+                                                : 'Sem avaliações'}
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )
                 ) : carregando ? (
                     <div className="flex justify-center py-10">
                         <Loader2 size={24} className="animate-spin text-muted-foreground" />
@@ -214,9 +366,12 @@ export default function Locais() {
                                             </p>
                                         )}
                                     </div>
-                                    <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs">
-                                        {getCategoryLabel(lugar.categoria)}
-                                    </span>
+                                    <div className="flex shrink-0 items-center gap-2">
+                                        <span className="rounded-full bg-secondary px-2 py-0.5 text-xs">
+                                            {getCategoryLabel(lugar.categoria)}
+                                        </span>
+                                        <FavoriteButton place={lugar} onToggle={handleFavoriteToggle} />
+                                    </div>
                                 </div>
                                 <div className="mt-2 flex items-center gap-1">
                                     <Star
