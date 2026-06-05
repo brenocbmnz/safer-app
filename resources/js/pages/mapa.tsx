@@ -216,10 +216,6 @@ export default function Mapa() {
                             <Crosshair size={16} />
                         </button>
                     </div>
-
-                    <div className="mt-2">
-                        <FilterPanel filters={filtros} onChange={setFiltros} />
-                    </div>
                 </div>
 
                 {/* Feedback toast */}
@@ -270,13 +266,16 @@ export default function Mapa() {
                     </div>
 
                     {/* Place list (desktop sidebar / mobile below map) */}
-                    <div className="max-h-64 overflow-y-auto lg:max-h-none lg:w-80 lg:overflow-y-auto">
-                        <PlaceList
-                            lugares={lugares}
-                            selecionadoId={selecionadoId}
-                            onSelect={handleSelectPlace}
-                            carregando={carregando}
-                        />
+                    <div className="flex flex-col gap-2 lg:w-80">
+                        <FilterPanel filters={filtros} onChange={setFiltros} />
+                        <div className="max-h-64 overflow-y-auto lg:max-h-none lg:overflow-y-auto">
+                            <PlaceList
+                                lugares={lugares}
+                                selecionadoId={selecionadoId}
+                                onSelect={handleSelectPlace}
+                                carregando={carregando}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
