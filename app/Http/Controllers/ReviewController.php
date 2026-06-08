@@ -12,7 +12,7 @@ final class ReviewController
 {
     public function index(Place $place): JsonResponse
     {
-        $reviews = $place->reviews()->latest()->get()->map(fn ($r) => [
+        $reviews = $place->reviews()->latest()->get()->map(fn (\App\Models\Review $r) => [
             'id' => $r->id,
             'nota' => $r->nota,
             'comentario' => $r->comentario,

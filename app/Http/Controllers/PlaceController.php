@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePlaceRequest;
 use App\Http\Requests\UpdatePlaceRequest;
 use App\Models\Place;
+use App\Models\Review;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -66,7 +67,11 @@ final class PlaceController
         }
 
         if ($request->filled('notaMinima')) {
-            $query->having('reviews_avg_nota', '>=', $request->float('notaMinima'));
+            $notaMin = $request->float('notaMinima');
+            $query->whereRaw(
+                '(SELECT AVG(nota) FROM reviews WHERE reviews.place_id = places.id) >= CAST(? AS REAL)',
+                [$notaMin],
+            );
         }
 
         $ordenar = $request->string('ordenar')->toString();
@@ -137,7 +142,7 @@ final class PlaceController
                 'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
                 'criadoEm' => $place->created_at->toIso8601String(),
                 'atualizadoEm' => $place->updated_at->toIso8601String(),
-                'avaliacoes' => $place->reviews->map(fn ($r) => [
+                'avaliacoes' => $place->reviews->map(fn (Review $r) => [
                     'id' => $r->id,
                     'nota' => $r->nota,
                     'comentario' => $r->comentario,

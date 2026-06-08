@@ -80,15 +80,19 @@ Acesse a aplicação em **http://localhost:8000**.
 ## Rodando os testes
 
 ```bash
-composer test
+vendor/bin/pest
 ```
 
-Isso executa a suíte completa: cobertura de tipos, testes unitários, análise estática (PHPStan nível 9) e linting.
-
-Para rodar apenas os testes unitários:
+Para rodar com cobertura de código:
 
 ```bash
-php artisan test --compact
+XDEBUG_MODE=coverage vendor/bin/pest --coverage
+```
+
+Para análise estática com PHPStan:
+
+```bash
+vendor/bin/phpstan
 ```
 
 ## Estrutura do projeto
