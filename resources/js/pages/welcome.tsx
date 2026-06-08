@@ -14,7 +14,7 @@ export default function Welcome({
                     {/* Logo */}
                     <div className="flex flex-col items-center gap-1">
                         <img
-                            src="/design/Pride-Map(1).png"
+                            src="/design/pride-location.png"
                             alt="Safer Maps logo"
                             className="h-12 w-12 object-contain"
                         />
