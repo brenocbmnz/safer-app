@@ -1,100 +1,120 @@
-- Inertia & React (this project) version: **[github.com/nunomaduro/laravel-starter-kit-inertia-react](https://github.com/nunomaduro/laravel-starter-kit-inertia-react)**
-- Blade version: **[github.com/nunomaduro/laravel-starter-kit](https://github.com/nunomaduro/laravel-starter-kit)**
-- Inertia & Vue version: **[github.com/nunomaduro/laravel-starter-kit-inertia-vue](https://github.com/nunomaduro/laravel-starter-kit-inertia-vue)**
+# Safer Maps
 
-<p align="center">
-    <a href="https://youtu.be/VhzP0XWGTC4" target="_blank">
-        <img src="https://github.com/nunomaduro/laravel-starter-kit/blob/main/art/banner.png" alt="Overview Laravel Starter Kit" style="width:70%;">
-    </a>
-</p>
+Safer Maps é uma plataforma comunitária que permite à comunidade LGBTQIA+ e aliados descobrir, cadastrar e avaliar espaços seguros e inclusivos — cafés, bares, clínicas de saúde, instituições de ensino e muito mais. O objetivo é construir um mapa colaborativo de locais que respeitam e acolhem diversidade.
 
-<p>
-    <a href="https://github.com/nunomaduro/laravel-starter-kit-inertia-react/actions"><img src="https://github.com/nunomaduro/laravel-starter-kit-inertia-react/actions/workflows/tests.yml/badge.svg" alt="Build Status"></a>
-    <a href="https://packagist.org/packages/nunomaduro/laravel-starter-kit-inertia-react"><img src="https://img.shields.io/packagist/dt/nunomaduro/laravel-starter-kit-inertia-react" alt="Total Downloads"></a>
-    <a href="https://packagist.org/packages/nunomaduro/laravel-starter-kit-inertia-react"><img src="https://img.shields.io/packagist/v/nunomaduro/laravel-starter-kit-inertia-react" alt="Latest Stable Version"></a>
-    <a href="https://packagist.org/packages/nunomaduro/laravel-starter-kit-inertia-react"><img src="https://img.shields.io/packagist/l/nunomaduro/laravel-starter-kit-inertia-react" alt="License"></a>
-</p>
+## Funcionalidades
 
-**Laravel Starter Kit (Inertia & React)** is an ultra-strict, type-safe [Laravel](https://laravel.com) skeleton engineered for developers who refuse to compromise on code quality. This opinionated starter kit enforces rigorous development standards through meticulous tooling configuration and architectural decisions that prioritize type safety, immutability, and fail-fast principles.
+- **Mapa interativo** — visualize locais próximos com integração à API do Google Places
+- **Cadastro de locais** — adicione novos estabelecimentos com descrição, categoria, endereço e amenidades
+- **Avaliações e notas** — deixe comentários e uma nota de 1 a 5 para cada local
+- **Favoritos** — salve locais para acessar rapidamente depois
+- **Filtros avançados** — filtre por categoria, amenidades, nota mínima e distância
+- **Amenidades inclusivas** — banheiro gênero neutro, aceita nome social, acessível para PCD, ambiente acolhedor, funcionários preparados, entre outros
+- **Autenticação completa** — cadastro, login, verificação de e-mail e autenticação de dois fatores (2FA)
+- **Perfil com pronomes** — os usuários podem informar seus pronomes no cadastro
 
-## Why This Starter Kit?
+## Tecnologias
 
-Modern PHP has evolved into a mature, type-safe language, yet many Laravel projects still operate with loose conventions and optional typing. This starter kit changes that paradigm by enforcing:
+- **Backend:** PHP 8.5 · Laravel 13 · Laravel Fortify
+- **Frontend:** React · TypeScript · Inertia.js v3 · Tailwind CSS
+- **Banco de dados:** SQLite (padrão, sem configuração extra necessária)
+- **Build:** Vite · Bun
+- **Qualidade de código:** PHPStan · Rector · Pint · Pest
 
-- **Fully Actions-Oriented Architecture**: Every operation is encapsulated in a single-action class
-- **Cruddy by Design**: Standardized CRUD operations for all controllers, actions, and Inertia & React pages
-- **100% Type Coverage**: Every method, property, and parameter is explicitly typed
-- **Zero Tolerance for Code Smells**: Rector, PHPStan, OxLint, and Oxfmt at maximum strictness catch issues before they become bugs
-- **Immutable-First Architecture**: Data structures favor immutability to prevent unexpected mutations
-- **Fail-Fast Philosophy**: Errors are caught at compile-time, not runtime
-- **Automated Code Quality**: Pre-configured tools ensure consistent, pristine code across your entire team
-- **Just Better Laravel Defaults**: Thanks to **[Essentials](https://github.com/nunomaduro/essentials)** / strict models, auto eager loading, immutable dates, and more...
-- **AI Guidelines**: Integrated AI Guidelines to assist in maintaining code quality and consistency
-- **Full Testing Suite**: More than 150 tests with 100% code coverage using Pest
-- 
-This isn't just another Laravel boilerplate—it's a statement that PHP applications can and should be built with the same rigor as strongly-typed languages like Rust or TypeScript.
+## Pré-requisitos
 
-## Getting Started
+Antes de começar, certifique-se de ter instalado:
 
-> **Requires [PHP 8.5+](https://php.net/releases/) and a code coverage driver like [xdebug](https://xdebug.org/docs/install)**.
+- [PHP 8.5+](https://php.net/releases/)
+- [Composer](https://getcomposer.org)
+- [Bun](https://bun.sh) (gerenciador de pacotes JavaScript)
+- [Git](https://git-scm.com)
+- Uma **chave de API do Google Maps** com as APIs *Places API* e *Maps JavaScript API* habilitadas ([Google Cloud Console](https://console.cloud.google.com))
 
-Create your type-safe Laravel application using [Composer](https://getcomposer.org):
+## Como rodar localmente
+
+### 1. Clone o repositório
 
 ```bash
-composer create-project nunomaduro/laravel-starter-kit-inertia-react --prefer-dist example-app
+git clone <url-do-repositorio>
+cd safer-app
 ```
 
-### Initial Setup
+### 2. Configure as variáveis de ambiente
 
-Navigate to your project and complete the setup:
+Copie o arquivo de exemplo e edite conforme necessário:
 
 ```bash
-cd example-app
+cp .env.example .env
+```
 
-# Setup the project
+Abra o arquivo `.env` e preencha sua chave da API do Google Maps:
+
+```env
+GOOGLE_MAPS_API_KEY=sua_chave_aqui
+```
+
+> As demais variáveis já possuem valores padrão adequados para desenvolvimento local. O banco de dados usa SQLite por padrão — nenhuma configuração extra de banco é necessária.
+
+### 3. Execute o setup automatizado
+
+O comando abaixo instala todas as dependências PHP e JavaScript, gera a chave da aplicação, executa as migrations e builda os assets do frontend:
+
+```bash
 composer setup
+```
 
-# Start the development server
+### 4. Suba o servidor de desenvolvimento
+
+```bash
 composer dev
 ```
 
-### Optional: Browser Testing Setup
+Esse único comando inicia em paralelo:
+- Servidor Laravel (`http://localhost:8000`)
+- Worker de filas
+- Monitor de logs (Pail)
+- Servidor de desenvolvimento Vite (hot reload)
 
-If you plan to use Pest's browser testing capabilities:
+Acesse a aplicação em **http://localhost:8000**.
 
-```bash
-bun add playwright
-bunx playwright install
-```
-
-### Verify Installation
-
-Run the test suite to ensure everything is configured correctly:
+## Rodando os testes
 
 ```bash
 composer test
 ```
 
-You should see 100% test coverage and all quality checks passing.
+Isso executa a suíte completa: cobertura de tipos, testes unitários, análise estática (PHPStan nível 9) e linting.
 
-## Available Tooling
+Para rodar apenas os testes unitários:
 
-### Development
-- `composer dev` - Starts Laravel server, queue worker, log monitoring, and Vite+ dev server concurrently
+```bash
+php artisan test --compact
+```
 
-### Code Quality
-- `composer lint` - Runs Rector (refactoring), Pint (PHP formatting), and Oxfmt (JS/TS formatting)
-- `composer test:lint` - Dry-run mode for CI/CD pipelines
+## Estrutura do projeto
 
-### Testing
-- `composer test:type-coverage` - Ensures 100% type coverage with Pest
-- `composer test:types` - Runs PHPStan at level 9 (maximum strictness)
-- `composer test:unit` - Runs Pest tests with 100% code coverage requirement
-- `composer test` - Runs the complete test suite (type coverage, unit tests, linting, static analysis)
+```
+app/
+  Actions/        # Lógica de negócio encapsulada em classes de ação (padrão Actions)
+  Http/
+    Controllers/  # Controllers HTTP e de API
+    Requests/     # Form Requests para validação
+  Models/         # User, Place, Review
+  Services/       # Integração com a API do Google Places
+resources/
+  js/
+    pages/        # Páginas React (dashboard, locais, mapa, configurações, auth)
+    components/   # Componentes reutilizáveis (PlaceDetailPanel, ReviewFormModal, etc.)
+    hooks/        # usePlaces, usePlaceDetails
+database/
+  migrations/     # Estrutura do banco de dados
+  factories/      # Factories para testes
+tests/
+  Feature/        # Testes de integração
+  Unit/           # Testes unitários
+```
 
-### Maintenance
-- `composer update:requirements` - Updates all PHP and Bun dependencies to latest versions
+## Licença
 
-## License
-
-**Laravel Starter Kit Inertia React** was created by **[Nuno Maduro](https://x.com/enunomaduro)** under the **[MIT license](https://opensource.org/licenses/MIT)**.
+Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC) e está licenciado sob a [licença MIT](https://opensource.org/licenses/MIT).
