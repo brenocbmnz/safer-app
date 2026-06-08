@@ -1,5 +1,7 @@
 # Safer Maps - Protótipo
 
+Link do repositório: https://github.com/brenocbmnz/safer-app
+
 Safer Maps é um protótipo de aplicação que almeja permitir que comunidade LGBTQIA+ e aliados descobrir, cadastrar e avaliar espaços seguros e inclusivos, como por exemplo cafés, bares, clínicas de saúde, instituições de ensino e muito mais. O objetivo é construir um mapa colaborativo de locais que respeitam e acolhem diversidade.
 
 ## Funcionalidades
