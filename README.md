@@ -83,12 +83,6 @@ Acesse a aplicação em **http://localhost:8000**.
 vendor/bin/pest
 ```
 
-Para rodar com cobertura de código:
-
-```bash
-XDEBUG_MODE=coverage vendor/bin/pest --coverage
-```
-
 Para análise estática com PHPStan:
 
 ```bash
