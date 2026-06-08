@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 final class PlaceController
 {
@@ -19,7 +20,7 @@ final class PlaceController
         $query = Place::query()->withAvg('reviews', 'nota')->withCount('reviews');
 
         if (auth()->check()) {
-            $query->withExists(['favoritedBy as is_favorited' => fn ($q) => $q->where('user_id', auth()->id())]);
+            $query->withExists(['favoritedBy as is_favorited' => fn (\Illuminate\Database\Eloquent\Builder $q) => $q->where('user_id', auth()->id())]);
         }
 
         if ($request->filled('categoria')) {
@@ -28,7 +29,7 @@ final class PlaceController
 
         if ($request->filled('busca')) {
             $termo = $request->string('busca')->trim()->toString();
-            $query->where(function ($q) use ($termo): void {
+            $query->where(function (\Illuminate\Database\Eloquent\Builder $q) use ($termo): void {
                 $q->where('nome', 'like', "%{$termo}%")
                     ->orWhere('descricao', 'like', "%{$termo}%")
                     ->orWhere('endereco', 'like', "%{$termo}%");
@@ -46,26 +47,26 @@ final class PlaceController
 
         if ($request->filled('latitudeMin') && $request->filled('latitudeMax')) {
             $query->whereBetween('latitude', [
-                (float) $request->input('latitudeMin'),
-                (float) $request->input('latitudeMax'),
+                $request->float('latitudeMin'),
+                $request->float('latitudeMax'),
             ]);
         }
 
         if ($request->filled('longitudeMin') && $request->filled('longitudeMax')) {
-            $min = (float) $request->input('longitudeMin');
-            $max = (float) $request->input('longitudeMax');
+            $min = $request->float('longitudeMin');
+            $max = $request->float('longitudeMax');
 
             if ($min <= $max) {
                 $query->whereBetween('longitude', [$min, $max]);
             } else {
-                $query->where(function ($q) use ($min, $max): void {
+                $query->where(function (\Illuminate\Database\Eloquent\Builder $q) use ($min, $max): void {
                     $q->where('longitude', '>=', $min)->orWhere('longitude', '<=', $max);
                 });
             }
         }
 
         if ($request->filled('notaMinima')) {
-            $query->having('reviews_avg_nota', '>=', (float) $request->input('notaMinima'));
+            $query->having('reviews_avg_nota', '>=', $request->float('notaMinima'));
         }
 
         $ordenar = $request->string('ordenar')->toString();
@@ -73,8 +74,8 @@ final class PlaceController
         if ($ordenar === 'popular') {
             $query->orderByRaw('reviews_avg_nota IS NULL ASC')->orderByDesc('reviews_avg_nota')->orderByDesc('reviews_count');
         } elseif ($ordenar === 'perto' && $request->filled('userLat') && $request->filled('userLng')) {
-            $lat = (float) $request->input('userLat');
-            $lng = (float) $request->input('userLng');
+            $lat = $request->float('userLat');
+            $lng = $request->float('userLng');
             $query->orderByRaw(
                 '(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))',
                 [$lat, $lng, $lat],
@@ -96,7 +97,7 @@ final class PlaceController
             'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
             'google_place_id' => $place->google_place_id,
             'user_id' => $place->user_id,
-            'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
+            'mediaNota' => $place->reviews_avg_nota !== null ? round($place->reviews_avg_nota, 2) : null,
             'totalAvaliacoes' => (int) $place->reviews_count,
             'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
             'criadoEm' => $place->created_at->toIso8601String(),
@@ -113,7 +114,7 @@ final class PlaceController
         $place->load('reviews');
 
         if (auth()->check()) {
-            $place->loadExists(['favoritedBy as is_favorited' => fn ($q) => $q->where('user_id', auth()->id())]);
+            $place->loadExists(['favoritedBy as is_favorited' => fn (\Illuminate\Database\Eloquent\Builder $q) => $q->where('user_id', auth()->id())]);
         }
 
         return response()->json([
@@ -131,7 +132,7 @@ final class PlaceController
                 'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
                 'google_place_id' => $place->google_place_id,
                 'user_id' => $place->user_id,
-                'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
+                'mediaNota' => $place->reviews_avg_nota !== null ? round($place->reviews_avg_nota, 2) : null,
                 'totalAvaliacoes' => (int) $place->reviews_count,
                 'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
                 'criadoEm' => $place->created_at->toIso8601String(),
@@ -208,7 +209,7 @@ final class PlaceController
         $place->loadCount('reviews');
 
         if (auth()->check()) {
-            $place->loadExists(['favoritedBy as is_favorited' => fn ($q) => $q->where('user_id', auth()->id())]);
+            $place->loadExists(['favoritedBy as is_favorited' => fn (\Illuminate\Database\Eloquent\Builder $q) => $q->where('user_id', auth()->id())]);
         }
 
         return response()->json([
@@ -226,7 +227,7 @@ final class PlaceController
                 'imagemUrl' => $place->imagem_path ? Storage::disk('public')->url($place->imagem_path) : null,
                 'google_place_id' => $place->google_place_id,
                 'user_id' => $place->user_id,
-                'mediaNota' => $place->reviews_avg_nota !== null ? round((float) $place->reviews_avg_nota, 2) : null,
+                'mediaNota' => $place->reviews_avg_nota !== null ? round($place->reviews_avg_nota, 2) : null,
                 'totalAvaliacoes' => (int) $place->reviews_count,
                 'isFavorited' => auth()->check() ? (bool) ($place->is_favorited ?? false) : false,
                 'criadoEm' => $place->created_at->toIso8601String(),
@@ -249,6 +250,8 @@ final class PlaceController
 
     private function uploadImage(UploadedFile $file): string
     {
-        return $file->store('places', 'public');
+        $path = $file->store('places', 'public');
+
+        return $path !== false ? $path : throw new RuntimeException('Falha ao salvar imagem.');
     }
 }

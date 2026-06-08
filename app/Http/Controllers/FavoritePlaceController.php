@@ -13,6 +13,7 @@ final class FavoritePlaceController
 {
     public function index(): JsonResponse
     {
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
         $favorites = $user->favorites()
@@ -44,14 +45,18 @@ final class FavoritePlaceController
 
     public function store(Place $place, AddPlaceToFavoritesAction $action): JsonResponse
     {
-        $action->handle(auth()->user(), $place);
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $action->handle($user, $place);
 
         return response()->json(['sucesso' => true, 'mensagem' => 'Local adicionado aos favoritos'], 201);
     }
 
     public function destroy(Place $place, RemovePlaceFromFavoritesAction $action): JsonResponse
     {
-        $action->handle(auth()->user(), $place);
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $action->handle($user, $place);
 
         return response()->json(['sucesso' => true, 'mensagem' => 'Local removido dos favoritos']);
     }

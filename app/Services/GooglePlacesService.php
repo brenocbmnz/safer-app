@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 final class GooglePlacesService
 {
@@ -12,13 +13,14 @@ final class GooglePlacesService
 
     public function __construct()
     {
-        $this->apiKey = (string) config('services.google_places.key', '');
+        $key = config('services.google_places.key', '');
+        $this->apiKey = is_string($key) ? $key : '';
     }
 
     /**
      * @return list<array<string, mixed>>
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function nearbySearch(
         float $latitude,
@@ -28,7 +30,7 @@ final class GooglePlacesService
         ?string $type = null,
     ): array {
         if ($this->apiKey === '') {
-            throw new \RuntimeException('Chave da API do Google Places não configurada.', 503);
+            throw new RuntimeException('Chave da API do Google Places não configurada.', 503);
         }
 
         $params = [
@@ -51,7 +53,7 @@ final class GooglePlacesService
         );
 
         if (! $response->successful()) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Falha ao consultar Google Places (status {$response->status()}).",
                 $response->status(),
             );
@@ -63,33 +65,36 @@ final class GooglePlacesService
         if (! in_array($data['status'], ['OK', 'ZERO_RESULTS'], true)) {
             $message = $data['error_message'] ?? "Resposta inesperada do Google Places: {$data['status']}";
             $code = $data['status'] === 'OVER_QUERY_LIMIT' ? 429 : 502;
-            throw new \RuntimeException($message, $code);
+            throw new RuntimeException($message, $code);
         }
 
-        return array_map(fn (array $result) => [
-            'placeId' => $result['place_id'],
-            'nome' => $result['name'],
-            'endereco' => $result['formatted_address'] ?? $result['vicinity'] ?? 'Endereço não informado',
-            'latitude' => $result['geometry']['location']['lat'],
-            'longitude' => $result['geometry']['location']['lng'],
-            'rating' => $result['rating'] ?? null,
-            'totalAvaliacoes' => $result['user_ratings_total'] ?? null,
-            'tipos' => $result['types'] ?? [],
-            'abertoAgora' => $result['opening_hours']['open_now'] ?? null,
-            'referencia' => $result['reference'] ?? null,
-            'origem' => 'google',
-        ], $data['results'] ?? []);
+        return array_map(function (array $result): array {
+            /** @var array{place_id: string, name: string, formatted_address?: string, vicinity?: string, geometry: array{location: array{lat: float, lng: float}}, rating?: float, user_ratings_total?: int, types?: list<string>, opening_hours?: array{open_now?: bool}, reference?: string} $result */
+            return [
+                'placeId' => $result['place_id'],
+                'nome' => $result['name'],
+                'endereco' => $result['formatted_address'] ?? $result['vicinity'] ?? 'Endereço não informado',
+                'latitude' => $result['geometry']['location']['lat'],
+                'longitude' => $result['geometry']['location']['lng'],
+                'rating' => $result['rating'] ?? null,
+                'totalAvaliacoes' => $result['user_ratings_total'] ?? null,
+                'tipos' => $result['types'] ?? [],
+                'abertoAgora' => $result['opening_hours']['open_now'] ?? null,
+                'referencia' => $result['reference'] ?? null,
+                'origem' => 'google',
+            ];
+        }, $data['results'] ?? []);
     }
 
     /**
      * @return array<string, mixed>
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public function placeDetails(string $placeId): array
     {
         if ($this->apiKey === '') {
-            throw new \RuntimeException('Chave da API do Google Places não configurada.', 503);
+            throw new RuntimeException('Chave da API do Google Places não configurada.', 503);
         }
 
         $response = Http::timeout(10)->get(
@@ -103,7 +108,7 @@ final class GooglePlacesService
         );
 
         if (! $response->successful()) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 "Falha ao consultar Google Places Details (status {$response->status()}).",
                 $response->status(),
             );
@@ -115,10 +120,10 @@ final class GooglePlacesService
         if ($data['status'] !== 'OK') {
             $message = $data['error_message'] ?? "Resposta inesperada do Google Places: {$data['status']}";
             $code = $data['status'] === 'OVER_QUERY_LIMIT' ? 429 : 502;
-            throw new \RuntimeException($message, $code);
+            throw new RuntimeException($message, $code);
         }
 
-        /** @var array<string, mixed> $result */
+        /** @var array{name?: string, formatted_address?: string, geometry?: array{location?: array{lat: float, lng: float}}, international_phone_number?: string, types?: list<string>} $result */
         $result = $data['result'] ?? [];
 
         /** @var array{lat: float, lng: float} $location */

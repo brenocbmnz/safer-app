@@ -19,8 +19,9 @@ return new class extends Migration
     public function up(): void
     {
         DB::table('places')->lazyById()->each(function (object $place): void {
+            $raw = is_string($place->amenidades) ? $place->amenidades : '[]';
             /** @var list<string> $amenidades */
-            $amenidades = json_decode($place->amenidades, true) ?? [];
+            $amenidades = json_decode($raw, true) ?? [];
 
             $filtradas = array_values(array_filter(
                 $amenidades,

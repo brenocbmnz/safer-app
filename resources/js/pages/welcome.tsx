@@ -24,7 +24,7 @@ export default function Welcome({
 
                     {/* Illustration */}
                     <img
-                        src="/design/Green Cute Pride Month Poster.png"
+                        src="/design/Green-Cute-Pride-Month-Poster.png"
                         alt="Ilustração de um sapo segurando um coração com as cores do orgulho."
                         className="max-h-64 w-full object-contain"
                     />

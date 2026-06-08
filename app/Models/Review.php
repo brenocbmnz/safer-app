@@ -22,7 +22,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class Review extends Model
 {
+    /** @use HasFactory<\Database\Factories\ReviewFactory> */
     use HasFactory;
+
     use HasUuids;
 
     protected $table = 'reviews';

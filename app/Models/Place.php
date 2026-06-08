@@ -27,10 +27,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string|null $user_id
  * @property-read CarbonInterface $created_at
  * @property-read CarbonInterface $updated_at
+ * @property-read float|null $reviews_avg_nota
+ * @property-read int $reviews_count
+ * @property-read bool $is_favorited
  */
 final class Place extends Model
 {
+    /** @use HasFactory<\Database\Factories\PlaceFactory> */
     use HasFactory;
+
     use HasUuids;
 
     protected $table = 'places';
