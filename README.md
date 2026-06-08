@@ -1,6 +1,6 @@
-# Safer Maps
+# Safer Maps - Protótipo
 
-Safer Maps é uma plataforma comunitária que permite à comunidade LGBTQIA+ e aliados descobrir, cadastrar e avaliar espaços seguros e inclusivos — cafés, bares, clínicas de saúde, instituições de ensino e muito mais. O objetivo é construir um mapa colaborativo de locais que respeitam e acolhem diversidade.
+Safer Maps é um protótipo de aplicação que almeja permitir que comunidade LGBTQIA+ e aliados descobrir, cadastrar e avaliar espaços seguros e inclusivos, como por exemplo cafés, bares, clínicas de saúde, instituições de ensino e muito mais. O objetivo é construir um mapa colaborativo de locais que respeitam e acolhem diversidade.
 
 ## Funcionalidades
 
@@ -15,11 +15,10 @@ Safer Maps é uma plataforma comunitária que permite à comunidade LGBTQIA+ e a
 
 ## Tecnologias
 
-- **Backend:** PHP 8.5 · Laravel 13 · Laravel Fortify
+- **Backend:** PHP 8.5 · Laravel 13
 - **Frontend:** React · TypeScript · Inertia.js v3 · Tailwind CSS
 - **Banco de dados:** SQLite (padrão, sem configuração extra necessária)
-- **Build:** Vite · Bun
-- **Qualidade de código:** PHPStan · Rector · Pint · Pest
+- **Qualidade de código:** PHPStan · Pint · Pest
 
 ## Pré-requisitos
 
@@ -117,4 +116,6 @@ tests/
 
 ## Licença
 
-Este projeto foi desenvolvido como Trabalho de Conclusão de Curso (TCC) e está licenciado sob a [licença MIT](https://opensource.org/licenses/MIT).
+Este projeto foi desenvolvido para o Trabalho de Conclusão de Curso (TCC) "TECNOLOGIA E INCLUSÃO - DESENVOLVIMENTO DE PROTÓTIPO DE
+APLICATIVO DE CROWDSOURCING PARA IDENTIFICAÇÃO DE
+LOCAIS SEGUROS DA COMUNIDADE LGBTQIA+" e está licenciado sob a [licença MIT](https://opensource.org/licenses/MIT).
