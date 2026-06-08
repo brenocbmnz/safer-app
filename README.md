@@ -79,6 +79,8 @@ Acesse a aplicação em **http://localhost:8000**.
 
 ## Rodando os testes
 
+Para testes automatizados para verificação de arquitetura, testes unitários e testes de feature:
+
 ```bash
 vendor/bin/pest
 ```
